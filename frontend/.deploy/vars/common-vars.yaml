@@ -1,0 +1,21 @@
+variables:
+# Read major and minor version form package.json
+#  major: 1
+#  minor: 0
+#  patch: $[counter(format('{0}.{1}', variables['major'], variables['minor']), 0)]
+#  patch: $(Build.BuildId) # Used to to link build run with image #version
+
+  applicationName: 'smartdoc'
+  applicationType: 'web'
+
+  kubernetesYMLPath: '$(System.DefaultWorkingDirectory)/.deploy/k8s-resources'
+  kubernetesDeploymentName: '$(applicationName)-$(applicationType)'
+  kubernetesProbePath: $(basePath)
+
+  containerRegistryHostname: 'aksinnocvregistry.azurecr.io'
+  containerRegistryName: 'innocv-container-registry'
+
+  dockerfilePath: '**/Dockerfile'
+  repositoryName: '$(applicationName)-$(applicationType)'
+
+  image: '$(applicationName)-$(applicationType)'

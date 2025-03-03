@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: '#{kubernetesDeploymentName}#'
+  namespace: '#{k8sNamespace}#'
+  labels:
+    app: '#{kubernetesDeploymentName}#'
+data:
+  SPRING_PROFILES_ACTIVE: '#{appProfiles}#'
+  OPENAI_API_KEY: '#{openAiApikey}#'

@@ -1,0 +1,12 @@
+variables:
+  # consider adding variable groups for secrets or shared variables
+  #  - group: 'voice-ide-gen-dev'
+
+  kubernetesServiceEndpointName: innocv-msa-dev
+  kubernetesNamespace: stag
+  configBasePath: /smartdoc-api
+  ingressHostname: stag.innocv.com
+  ingressSecretName: innocv-wildcard-secret
+
+
+  appProfiles: staging

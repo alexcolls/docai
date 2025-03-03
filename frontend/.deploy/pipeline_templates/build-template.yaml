@@ -1,0 +1,76 @@
+jobs:
+  - job: Build
+    timeoutInMinutes: 200
+    variables:
+      - template: ../vars/common-vars.yaml
+    steps:
+ 
+      - checkout: self
+
+      - task: PowerShell@2
+        displayName: 'Read version'
+        name: readVersion
+        inputs:
+          targetType: 'inline'
+          script: |
+            $packageJson = Get-Content -Raw .\package.json | ConvertFrom-Json
+            $projectName=$packageJson.name
+            $version_arr=$packageJson.version -Split "\."
+            $releaseVersion=$version_arr[0] + '.' + $version_arr[1] + '.$(Build.BuildId)'
+            Write-Host "##vso[task.setvariable variable=releaseVersion]$releaseVersion"
+            Write-Host "##vso[task.setvariable variable=imageVersion;isOutput=true]$releaseVersion"
+            Write-Host "##vso[task.setvariable variable=projectName;isOutput=true]$projectName"
+
+      - task: Bash@3
+        displayName: 'Set version'
+        name: setVersion
+        inputs:
+          targetType: 'inline'
+          script: |
+            yarn version --no-git-tag-version --no-commit-hooks --new-version $(releaseVersion)
+
+      - task: Docker@2
+        inputs:
+          containerRegistry: '$(containerRegistryName)'
+          repository: $(repositoryName)
+          command: build
+          arguments: --build-arg buildnumber=$(readVersion.imageVersion)
+          Dockerfile: '$(dockerfilePath)'
+          tags: |
+            latest
+            $(readVersion.imageVersion)
+
+      - task: Docker@2
+        inputs:
+          containerRegistry: '$(containerRegistryName)'
+          repository: $(repositoryName)
+          command: push
+          Dockerfile: '$(dockerfilePath)'
+          tags: |
+            latest
+            $(readVersion.imageVersion)
+
+      - task: PowerShell@2
+        displayName: 'Create artifact'
+        inputs:
+          targetType: 'inline'
+          script: |
+            # version
+            New-Item releaseParams.json
+            [string]$jsonContent=[string]::Format("{{ projectName:""{0}"", releaseVersion:""{1}""}}","$(readVersion.projectName)","$(readVersion.imageVersion)")
+            Set-Content releaseParams.json $jsonContent
+
+      - task: CopyFiles@2
+        displayName: 'Copy artifact'
+        inputs:
+          SourceFolder: '$(System.DefaultWorkingDirectory)'
+          Contents: 'releaseParams.json'
+          TargetFolder: '$(Build.ArtifactStagingDirectory)'
+
+      - task: PublishBuildArtifacts@1
+        displayName: 'Publish artifact'
+        inputs:
+          PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+          ArtifactName: 'releaseParams'
+          publishLocation: 'Container'
+

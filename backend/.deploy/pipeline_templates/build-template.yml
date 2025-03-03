@@ -1,0 +1,28 @@
+parameters:
+  - name: imageTag
+    type: string
+  - name: releaseVersion
+    type: string
+
+steps:
+  - bash: |
+      echo "Release Version= ${{ parameters.releaseVersion }}, ImageTag= ${{ parameters.imageTag }}"
+      sed -i "s/^version=.*/version=${{ parameters.releaseVersion }}/" gradle.properties
+    displayName: Update Version in gradle.properties
+  - task: Gradle@2
+    inputs:
+      gradleWrapperFile: gradlew
+      tasks: assemble
+      gradleOptions: -Xmx3072m
+      javaHomeOption: JDKVersion
+      jdkVersionOption: '1.21'
+      jdkArchitectureOption: x64
+  - task: Docker@2
+    displayName: Build and Publish
+    inputs:
+      containerRegistry: '$(containerRegistryName)'
+      repository: $(repositoryName)
+      command: buildAndPush
+      Dockerfile: '$(dockerfilePath)'
+      tags: |
+        ${{ parameters.imageTag }}

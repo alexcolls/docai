@@ -1,0 +1,7 @@
+variables:
+  kubernetesServiceEndpointName: innocv-msa-dev
+  kubernetesNamespace: dev
+  apiBasePath: /smartdoc-api
+  webBasePath: /smartdoc-web
+  ingressHostname: apps.innocv.com
+  ingressSecretName: innocv-wildcard-secret

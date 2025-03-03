@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: '#{kubernetesDeploymentName}#'
+  namespace: '#{kubernetesNamespace}#'
+  labels:
+    app: '#{kubernetesDeploymentName}#'
+data:
+  NUXT_APP_BASE_URL: '#{basePath}#'
+  NUXT_APP_API_URL: '#{apiUrl}#'
+  NUXT_APP_VERSION: '#{version}#'
+  NUXT_MAX_FILE_SIZE: '#{maxFileSize}#'
+  NUXT_REFRESH_INTERVAL: '#{refreshInterval}#'

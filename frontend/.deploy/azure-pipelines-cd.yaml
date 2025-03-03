@@ -1,0 +1,32 @@
+trigger:
+  - dev
+
+variables:
+  - template: vars/common-vars.yaml
+  - group: 'smartdoc-web-dev'
+
+name: $(Build.BuildId)
+
+pool:
+  vmImage: ubuntu-latest
+  
+stages:
+  - stage: Build
+    displayName: Build
+    jobs:      
+      - template: pipeline_templates/build-template.yaml
+
+  - stage: Development
+    displayName: Development
+    dependsOn:
+      - Build
+    variables:
+      version: $[stageDependencies.Build.Build.outputs['readVersion.imageVersion']]
+    jobs:
+      - template: pipeline_templates/deployment-template.yaml
+        parameters:
+          version: $(version)
+          environment: dev
+          stage:
+            kubernetesServiceEndpointName: innocv-msa-dev
+            deploymentEnvironment: $(applicationName)-development

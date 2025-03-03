@@ -1,0 +1,15 @@
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: '#{kubernetesDeploymentName}#'
+  namespace: '#{k8sNamespace}#'
+  labels:
+    app: '#{kubernetesDeploymentName}#'
+spec:
+  maxReplicas: 1
+  minReplicas: 1
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: '#{kubernetesDeploymentName}#'
+  targetCPUUtilizationPercentage: 50

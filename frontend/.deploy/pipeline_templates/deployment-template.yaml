@@ -1,0 +1,112 @@
+parameters:
+  - name: "version"
+  - name: "environment"
+  - name: "stage"
+    type: object
+
+jobs:
+  - deployment: Deploy
+    variables:
+      - template: ../vars/${{ parameters.environment }}-vars.yaml
+      - template: ../vars/common-vars.yaml
+      - name: imageName
+        value: $(image):${{ parameters.version }}
+      - name: ingressApplicationPath
+        value: $(kubernetesDeploymentName)-${{ parameters.environment }}
+    timeoutInMinutes: 200
+    environment: ${{ parameters.stage.deploymentEnvironment }}
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+            - checkout: self
+              persistCredentials: true
+
+            ##### REPLACE TOKENS #####
+            - task: qetza.replacetokens.replacetokens-task.replacetokens@5
+              displayName: 'Replace tokens'
+              inputs:
+                targetFiles: '$(kubernetesYMLPath)/*.yaml'
+
+            ##### CREATE NAMESPACE #####
+            - task: Kubernetes@1
+              displayName: 'Create Namespace'
+              inputs:
+                connectionType: Kubernetes Service Connection
+                kubernetesServiceEndpoint: ${{ parameters.stage.kubernetesServiceEndpointName }}
+                useClusterAdmin: true
+                command: apply
+                arguments: '-f $(kubernetesYMLPath)/k8s-namespace.yaml'
+
+            ##### CREATE CONFIG MAP #####
+            - task: Kubernetes@1
+              displayName: 'Create Config Map'
+              inputs:
+                connectionType: Kubernetes Service Connection
+                kubernetesServiceEndpoint: ${{ parameters.stage.kubernetesServiceEndpointName }}
+                command: apply
+                arguments: '-f $(kubernetesYMLPath)/k8s-config-map.yaml'
+
+            ##### CREATE SECRET #####
+            - task: Kubernetes@1
+              displayName: 'Create Secret'
+              inputs:
+                connectionType: Kubernetes Service Connection
+                kubernetesServiceEndpoint: ${{ parameters.stage.kubernetesServiceEndpointName }}
+                command: apply
+                arguments: '-f $(kubernetesYMLPath)/k8s-config-secret.yaml'
+            
+            ##### CREATE DEPLOYMENT #####
+            - task: Kubernetes@1
+              displayName: 'Create deployment'
+              inputs:
+                connectionType: Kubernetes Service Connection
+                kubernetesServiceEndpoint: ${{ parameters.stage.kubernetesServiceEndpointName }}
+                command: apply
+                arguments: '-f $(kubernetesYMLPath)/k8s-deployment.yaml'
+            
+#            ##### CREATE HPA #####
+#            - task: Kubernetes@1
+#              displayName: 'Create HPA'
+#              inputs:
+#                connectionType: Kubernetes Service Connection
+#                kubernetesServiceEndpoint: ${{ parameters.stage.kubernetesServiceEndpointName }}
+#                useClusterAdmin: true
+#                command: apply
+#                arguments: '-f $(kubernetesYMLPath)/k8s-hpa.yaml'
+
+            ##### CREATE SERVICE #####
+            - task: Kubernetes@1
+              displayName: 'Create service'
+              inputs:
+                connectionType: Kubernetes Service Connection
+                kubernetesServiceEndpoint: ${{ parameters.stage.kubernetesServiceEndpointName }}
+                command: apply
+                arguments: '-f $(kubernetesYMLPath)/k8s-service.yaml'
+
+            ##### CREATE INGRESS #####
+            - task: Kubernetes@1
+              displayName: 'Create ingress'
+              inputs:
+                connectionType: Kubernetes Service Connection
+                kubernetesServiceEndpoint: ${{ parameters.stage.kubernetesServiceEndpointName }}
+                useClusterAdmin: true
+                command: apply
+                arguments: '-f $(kubernetesYMLPath)/k8s-ingress.yaml'
+
+            ##### UPDATE ROLLOUT #####
+            - task: Kubernetes@1
+              displayName: 'Update rollout'
+              inputs:
+                connectionType: Kubernetes Service Connection
+                kubernetesServiceEndpoint: ${{ parameters.stage.kubernetesServiceEndpointName }}
+                namespace: '$(kubernetesNamespace)'
+                command: rollout
+                arguments: 'restart deployment/$(kubernetesDeploymentName)'
+
+            - script: |
+                git tag $(version)
+                git push origin $(version)
+              displayName: Tag
+              workingDirectory: $(Build.SourcesDirectory)
+              condition: ${{ eq(parameters.environment, 'pro') }}

@@ -1,0 +1,120 @@
+parameters:
+  - name: imageTag
+    type: string
+  - name: environment
+    type: string
+
+
+jobs:
+  - deployment: Deploy
+    timeoutInMinutes: 200
+    environment: $(applicationName)-${{ parameters.environment }}
+    variables:
+      - template: ../vars/${{ parameters.environment }}-vars.yaml
+      - template: ../vars/common-vars.yaml
+      - name: imageName
+        value: $(image):${{ parameters.imageTag }}
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+            - checkout: self
+              persistCredentials: true
+
+            ##### REPLACE TOKENS #####
+            - task: qetza.replacetokens.replacetokens-task.replacetokens@5
+              displayName: 'Replace tokens'
+              inputs:
+                targetFiles: '$(kubernetesYMLPath)/*.yaml'
+
+            ##### CREATE NAMESPACE #####
+            - task: Kubernetes@1
+              displayName: 'Create Namespace'
+              inputs:
+                connectionType: Kubernetes Service Connection
+                kubernetesServiceEndpoint: ${{ variables.kubernetesServiceEndpointName }}
+                useClusterAdmin: true
+                command: apply
+                arguments: '-f $(kubernetesYMLPath)/k8s-namespace.yaml'
+
+            ##### CREATE SECRET #####
+            - task: Kubernetes@1
+              displayName: 'Create Secret'
+              inputs:
+                connectionType: Kubernetes Service Connection
+                kubernetesServiceEndpoint: ${{ variables.kubernetesServiceEndpointName }}
+                useClusterAdmin: true
+                command: apply
+                arguments: '-f $(kubernetesYMLPath)/*-secret.yaml'
+
+            ##### CREATE CONFIG MAP #####
+            - task: Kubernetes@1
+              displayName: 'Create ConfigMap'
+              inputs:
+                connectionType: Kubernetes Service Connection
+                kubernetesServiceEndpoint: ${{ variables.kubernetesServiceEndpointName }}
+                useClusterAdmin: true
+                command: apply
+                arguments: '-f $(kubernetesYMLPath)/k8s-config-map.yaml'
+
+            ##### CREATE DEPLOYMENT #####
+            - task: Kubernetes@1
+              displayName: 'Create deployment'
+              inputs:
+                connectionType: Kubernetes Service Connection
+                kubernetesServiceEndpoint: ${{ variables.kubernetesServiceEndpointName }}
+                useClusterAdmin: true
+                command: apply
+                arguments: '-f $(kubernetesYMLPath)/k8s-deployment.yaml'
+
+            ##### CREATE SERVICE #####
+            - task: Kubernetes@1
+              displayName: 'Create service'
+              inputs:
+                connectionType: Kubernetes Service Connection
+                kubernetesServiceEndpoint: ${{ variables.kubernetesServiceEndpointName }}
+                useClusterAdmin: true
+                command: apply
+                arguments: '-f $(kubernetesYMLPath)/k8s-service.yaml'
+
+            ##### CREATE INGRESS #####
+            - task: Kubernetes@1
+              displayName: 'Create ingress'
+              inputs:
+                connectionType: Kubernetes Service Connection
+                kubernetesServiceEndpoint: ${{ variables.kubernetesServiceEndpointName }}
+                useClusterAdmin: true
+                command: apply
+                arguments: '-f $(kubernetesYMLPath)/k8s-ingress.yaml'
+
+            ##### PERSISTENT VOLUME #####
+#            - task: Kubernetes@1
+#              displayName: 'Create persinstent volume'
+#              inputs:
+#                connectionType: Kubernetes Service Connection
+#                kubernetesServiceEndpoint: ${{ variables.kubernetesServiceEndpointName }}
+#                useClusterAdmin: true
+#                command: apply
+#                arguments: '-f $(kubernetesYMLPath)/k8s-pv.yaml'
+
+            ##### PERSISTENT VOLUME CLAIM #####
+#            - task: Kubernetes@1
+#              displayName: 'Create persinstent volume claim'
+#              inputs:
+#                connectionType: Kubernetes Service Connection
+#                kubernetesServiceEndpoint: ${{ variables.kubernetesServiceEndpointName }}
+#                useClusterAdmin: true
+#                command: apply
+#                arguments: '-f $(kubernetesYMLPath)/k8s-pvc.yaml'
+
+            ##### UPDATE ROLLOUT #####
+            - task: Kubernetes@1
+              displayName: 'Update rollout'
+              inputs:
+                connectionType: Kubernetes Service Connection
+                kubernetesServiceEndpoint: ${{ variables.kubernetesServiceEndpointName }}
+                useClusterAdmin: true
+                namespace: '$(kubernetesNamespace)'
+                command: rollout
+                arguments: 'restart deployment/$(kubernetesDeploymentName)'
+              condition: ${{ eq(parameters.imageTag, 'latest') }}

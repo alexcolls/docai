@@ -1,0 +1,26 @@
+variables:
+  applicationName: 'smartdoc'
+  applicationType: 'api'
+
+  sonarProjectKey: $(ApplicationName)
+  sonarProjectName: $(ApplicationName)
+
+  k8sNamespace: '$(kubernetesNamespace)'
+  kubernetesYMLPath: '$(System.DefaultWorkingDirectory)/.deploy/k8s-resources'
+  kubernetesDeploymentName: '$(ApplicationName)-$(ApplicationType)'
+  kubernetesProbePath: '$(configBasePath)/actuator/health'
+  kubernetesDeploymentVolumeName: 'smartdoc-files'
+
+  ### build-template.yaml && K8s
+  containerRegistryHostname: 'aksinnocvregistry.azurecr.io'
+  containerRegistryName: 'innocv-container-registry'
+
+  dockerfilePath: '**/Dockerfile'
+  repositoryName: '$(ApplicationName)-$(ApplicationType)'
+
+  image: '$(applicationName)-$(applicationType)'
+
+
+  openAiApikey: $(OPENAI_API_KEY)
+
+
