@@ -574,3 +574,4 @@ For issues, questions, or contributions:
 ---
 
 **Made with ❤️ with Kotlin and Nuxt**
+Made with ❤️ and Kotlin and Nuxt by [INNOCV](https://www.innocv.com/)
