@@ -25,7 +25,7 @@ A powerful, enterprise-grade document processing platform that leverages OpenAI'
 - [Development](#-development)
 - [Deployment](#-deployment)
 - [Contributing](#-contributing)
-- [License](#-license)
+- [Support](#-support)
 
 ## ✨ Features
 
@@ -564,20 +564,13 @@ Contributions are welcome! Please follow these guidelines:
 - **Tests**: Write tests for new features and bug fixes
 - **Documentation**: Update README and inline docs for significant changes
 
-## 📄 License
-
-This project is proprietary software developed by INNOCV Solutions. All rights reserved.
-
-For licensing inquiries, please contact: [your-email@innocv.com]
-
 ## 📧 Support
 
 For issues, questions, or contributions:
 
 - **Issues**: [GitHub Issues](https://github.com/your-org/docai/issues)
-- **Email**: support@innocv.com
 - **Documentation**: [Wiki](https://github.com/your-org/docai/wiki)
 
 ---
 
-**Made with ❤️ by INNOCV Solutions**
+**Made with ❤️ for intelligent document processing**
