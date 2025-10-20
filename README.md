@@ -573,4 +573,4 @@ For issues, questions, or contributions:
 
 ---
 
-**Made with ❤️ for intelligent document processing**
+**Made with ❤️ with Kotlin and Nuxt**
